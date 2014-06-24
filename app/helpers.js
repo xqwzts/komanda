@@ -138,7 +138,68 @@ define([
 
         }
       } // limp options
+    },
+
+    loadPlugins: function() {
+      /*
+      ** Looks in the plugin directory for a plugins.json file
+      ** Parses it out and makes these plugins ready to use by:
+      **  1- Adding the plugin path to requirejs' config paths.
+      **  2- Adding the plugin and it's settings to the Komanda.settings.plugins array.
+      */
+
+      // Clear all plugins if any:
+      Komanda.settings.plugins = [];
+
+      var pluginJSONPath = "plugins/plugins.json"; // TODO: replace with a path stored in Komanda.settings: settings.get('pluginjsonpath');
+
+      // Load the fs and path node modules we will be needing.
+      var fs = requireNode("fs");
+      var path = requireNode("path");
+
+      // Check that the plugins.json file exists where it should be:
+      if (!fs.existsSync(pluginJSONPath)) {
+        return;
+      }
+
+      // Read the plugins.json file from the provided path
+      var pluginSettings = JSON.parse(fs.readFileSync(pluginJSONPath, 'utf8'));
+
+      // Check that there are plugins specified:
+      if (pluginSettings.length < 1) {
+        return;
+      }
+
+      // Add the plugins path to requirejs.config
+      window.requirejs.config({
+        paths: {
+          "plugins": "../plugins" // TODO replace with the basedir of the pluginJSONPath... relative to requirejs/main...
+        }
+      });
+
+      for (var i = 0; i < pluginSettings.length; i++) {
+        // The only required field is the plugin name:
+        if (!pluginSettings[i].name) {
+          continue;
+        }
+
+        // Build the path to this plugin to be added to requirejs.config
+        var pluginpath = {};
+        pluginpath[pluginSettings[i].name] = path.join("../plugins", pluginSettings[i].location, pluginSettings[i].main); // TODO hardcoded ../plugins path
+        window.requirejs.config({
+          paths: pluginpath
+        });
+
+        // And finally add the plugin info that we need to Komanda settings.
+        var pluginobj = {
+          "name": pluginSettings[i].name,
+          "channel": pluginSettings[i].channel || false,
+          "topic": pluginSettings[i].topic || false
+        };
+        Komanda.settings.addPlugin(pluginobj);
+      }
     }
+
   };
 
   return Helpers;
