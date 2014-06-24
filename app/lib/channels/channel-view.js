@@ -6,10 +6,8 @@ define([
   "uuid",
   "moment",
   "highlight",
-  "bluebird",
-  "hbs!templates/plugins/github/index",
-  "hbs!templates/plugins/github/feed-item"
-], function(Marionette, template, _, tab, uuid, moment, hljs, Promise, GithubView, GithubFeedItem) {
+  "ghkomanda"
+], function(Marionette, template, _, tab, uuid, moment, hljs, ghkomanda) {
 
   return Marionette.ItemView.extend({
     tagName: "div",
@@ -32,205 +30,36 @@ define([
       var self = this;
       self.completerSetup = false;
       self.completer = null;
-      self.last_feed_id = 0;
-
-      self.githubUpdateFunction = function() {
-        self.updateAndRender(function(r) {
-
-
-          if (r.feed[0]) {
-            if (r.feed[0].id !== self.last_feed_id) {
-              // .. add new feed items to channel
-
-              var newFeedItems = self.newFeeditems(r.feed);
-
-              self.last_feed_id = r.feed[0].id;
-
-              var html = GithubFeedItem({
-                items: newFeedItems,
-                uuid: uuid.v4(),
-                server: self.model.get("server")
-              });
-
-              $(self.el).find(".messages").append(html);
-
-              // Not sure why this wont scroll the window down
-              setTimeout(function() {
-                Komanda.helpers.scrollUpdate($(self.el).find(".messages"));
-              }, 100);
-            }
-          }
-
-        });
-      };
-
-      self.githubUpdateCheck = null;
-
-      self.repo = {
-        metadata: {},
-        feed: []
-      };
 
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":update:words", function(words, channels) {
         self.updateWords(false, false);
       });
-
       // Load Channel Plugins
       self.plugins();
-    },
-
-    newFeeditems: function(feed) {
-      var self = this;
-
-      var newFeedItems = [];
-      var len = feed.length;
-
-      if (len > 0) {
-
-        for (var i = 0; i < len; i += 1) {
-          var id = feed[i].id;
-
-          if (id === self.last_feed_id) {
-            return newFeedItems;
-          } else {
-            newFeedItems.push(feed[i]);
-          }
-        }
-
-      } else {
-        return [];
-      }
     },
 
     plugins: function() {
       var self = this;
 
+      // initialize all registered plugins:
+      ghkomanda.initialize();
+
       // Not sure this is the best place for this.
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":topic", function(topic) {
-        self.githubBar = $(".github-plugin-bar[data-server-id=\"" + self.model.get("server") + "\"][data-name=\"" + self.model.get("channel") + "\"]");
-
-        if (topic) {
-          var match = topic.match(/http(s)?:\/\/.*\.?github.com\/(.[\w|\-|\/]+)/);
-
-          if (match && match[2]) {
-            var key = match[2];
-
-            self.metadataURL = "";
-            self.feedURL = "";
-
-            if (/\/$/.test(key)) {
-              key = key.replace(/\/$/, "");
-            }
-
-            if (/\//.test(key)) {
-              self.metadataURL = "https://api.github.com/repos/" + key;
-              self.feedURL = "https://api.github.com/repos/" + key + "/events";
-            } else {
-              self.metadataURL = "https://api.github.com/orgs/" + key;
-              self.feedURL = "https://api.github.com/orgs/" + key + "/events";
-            }
-
-            self.pluginReDraw(function() {
-              // set the first feed cache id
-              if (self.repo.feed[0]) self.last_feed_id = self.repo.feed[0].id;
-            });
-
-            return;
-          }
-        }
-
-        if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-        if (self.githubBar) self.githubBar.remove();
-        $(self.el).removeClass("github-plugin");
+          // when the topic changes, call setTopic on each plugin:
+          console.log("calling plugins");
+          ghkomanda.setTopic(topic);
+          ghkomanda.onItemAdded = function(itemHTML) {
+            $(self.el).find(".messages").append(itemHTML);
+          };
       });
-    },
-
-    pluginToolbar: function(repo) {
-      var self = this;
-
-      var params = {
-        server: self.model.get("server"),
-        channel: self.model.get("channel"),
-        repo: repo,
-        isOrg: false
-      };
-
-      self.githubBar = $(".github-plugin-bar[data-server-id=\"" + params.server + "\"][data-name=\"" + params.channel + "\"]");
-
-      if (repo.metadata.hasOwnProperty("type")) {
-        if (repo.metadata.type === "Organization") {
-          params.isOrg = true;
-        }
-      }
-
-      var html = GithubView(params);
-
-      if (self.githubBar && self.githubBar.length > 0) {
-        self.githubBar.replaceWith(html);
-      } else {
-        $(self.el).prepend(html).addClass("github-plugin");
-        self.githubBar = $(".github-plugin-bar[data-server-id=\"" + params.server + "\"][data-name=\"" + params.channel + "\"]");
-      }
-    },
-
-    pluginReDraw: function(callback) {
-      var self = this;
-
-      self.updateAndRender(function(repo) {
-
-        self.pluginToolbar(repo);
-
-        if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-
-        self.githubUpdateCheck = setInterval(self.githubUpdateFunction, 20000);
-
-        if (_.isFunction(callback)) callback(repo);
-      });
-
-    },
-
-    updateAndRender: function(callback, errorback) {
-      var self = this;
-
-      if (!_.isFunction(callback)) callback = _.noop;
-      if (!_.isFunction(errorback)) errorback = _.noop;
-
-      Promise.resolve($.ajax({
-        url: self.metadataURL,
-        dataType: "json",
-        type: "get",
-        ifModified: true
-      }))
-      .then(function(metadata) {
-        return Promise.resolve($.ajax({
-          url: self.feedURL,
-          dataType: "json",
-          type: "get",
-          ifModified: true
-        }))
-        .then(function(feed) {
-          if (metadata && !_.isEmpty(metadata)) {
-            self.repo.metadata = metadata;
-            self.pluginToolbar(self.repo);
-          }
-
-          if (feed && feed.length > 0) {
-            self.repo.feed = feed;
-          }
-
-          return self.repo;
-        });
-      })
-      .catch(errorback)
-      .then(callback);
     },
 
     onClose: function() {
       var self = this;
 
-      if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-      if (self.githubBar) self.githubBar.remove();
-      self.githubUpdateFunction = null;
+      // foreach plugin, call plugin.close()
+      ghkomanda.close();
     },
 
     zenmode: function(e) {

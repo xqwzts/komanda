@@ -39,7 +39,9 @@ requirejs.config({
     "backbone-mousetrap": "lib/deps/backbone-mousetrap",
     
     // Storage
-    "localStorage": "../vendor/bower/backbone.localStorage/backbone.localStorage"
+    "localStorage": "../vendor/bower/backbone.localStorage/backbone.localStorage",
+
+    "ghkomanda": "plugins/github/ghkomanda"
   },
 
   "shim": {
