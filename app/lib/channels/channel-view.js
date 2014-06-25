@@ -34,12 +34,11 @@ define([
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":update:words", function(words, channels) {
         self.updateWords(false, false);
       });
-
-      // Load Channel Plugins
-      self.loadPlugins();
     },
 
     loadPlugins: function() {
+      // Needs to be called after the view has been rendered [onRender()] to ensure that the attach points have been inserted
+      // in the DOM and can be passed safely to the plugins.
       var self = this;
       var messagesEl = $(self.el).find(".messages");
 
@@ -73,7 +72,7 @@ define([
           var topicPlugs = _.where(self.plugs, {"topic": true});
           _.each(topicPlugs, function(topicPlug) {
             var thePlugin = topicPlug.plugin;
-            if (thePlugin.hasOwnProperty("consumeTopic")) {
+            if (_.has(thePlugin, "consumeTopic")) {
               thePlugin.consumeTopic(topic);
             }
           });
@@ -146,7 +145,7 @@ define([
 
       keys.push(Komanda.command.getCommands());
 
-      if (Komanda.connections && Komanda.connections.hasOwnProperty(self.model.get("server"))) {
+      if (Komanda.connections && _.has(Komanda.connections, self.model.get("server"))) {
         channels = _.map(Komanda.connections[self.model.get("server")].client.channels.models, function(c) {
           return c.get("channel").toLowerCase();
         });
@@ -187,6 +186,8 @@ define([
 
       self.setupAutoComplete();
       self.updateWords();
+      // Load Channel Plugins
+      self.loadPlugins();
     },
 
     focus: function(e) {
