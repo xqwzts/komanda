@@ -5,9 +5,8 @@ define([
   "tabcomplete",
   "uuid",
   "moment",
-  "highlight",
-  "ghkomanda"
-], function(Marionette, template, _, tab, uuid, moment, hljs, ghkomanda) {
+  "highlight"
+], function(Marionette, template, _, tab, uuid, moment, hljs) {
 
   return Marionette.ItemView.extend({
     tagName: "div",
@@ -30,36 +29,65 @@ define([
       var self = this;
       self.completerSetup = false;
       self.completer = null;
+      self.plugs = [];
 
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":update:words", function(words, channels) {
         self.updateWords(false, false);
       });
+
       // Load Channel Plugins
-      self.plugins();
+      self.loadPlugins();
     },
 
-    plugins: function() {
+    loadPlugins: function() {
+      var self = this;
+      var messagesEl = $(self.el).find(".messages");
+
+      // Get a list of channel plugins from Komanda.settings:
+      var channelPlugins = _.where(Komanda.settings.plugins, {"channel": true});
+
+      // Dynamic require to load all the plugins we want to initialize
+      requirejs(_.pluck(channelPlugins, "name"), function () {
+        for (var i = 0; i < channelPlugins.length; i++) {
+          var thePlug = channelPlugins[i];
+          // Push this plugin and its info to our plugin list so we can use it throughout the view:
+          self.plugs.push({
+            "name": thePlug.name,
+            "topic": thePlug.topic,
+            "plugin": arguments[i]
+          });
+          // Initialize the plugin that was just created, passing it the messageAttachPoint:
+          arguments[i].initialize({messageAttachPoint: messagesEl});
+        }
+        // Wait for all the plugins to load and add the hooks:
+        self.addTopicHooks();
+      });      
+    },
+
+    addTopicHooks: function() {
       var self = this;
 
-      // initialize all registered plugins:
-      ghkomanda.initialize();
-
-      // Not sure this is the best place for this.
+      // When the topic changes, call setTopic on each plugin:
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":topic", function(topic) {
-          // when the topic changes, call setTopic on each plugin:
-          console.log("calling plugins");
-          ghkomanda.setTopic(topic);
-          ghkomanda.onItemAdded = function(itemHTML) {
-            $(self.el).find(".messages").append(itemHTML);
-          };
+          // Filter out from this channel's plugins  all the ones that want to be notified on topic changes:
+          var topicPlugs = _.where(self.plugs, {"topic": true});
+          _.each(topicPlugs, function(topicPlug) {
+            var thePlugin = topicPlug.plugin;
+            if (thePlugin.hasOwnProperty("consumeTopic")) {
+              thePlugin.consumeTopic(topic);
+            }
+          });
       });
     },
 
     onClose: function() {
       var self = this;
 
-      // foreach plugin, call plugin.close()
-      ghkomanda.close();
+      // Foreach plugin, call plugin.close():
+      _.each(self.plugs, function(channelPlug) {
+        var thePlugin = channelPlug.plugin;
+        thePlugin.close();
+      });
     },
 
     zenmode: function(e) {
