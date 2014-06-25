@@ -1,16 +1,19 @@
 define([
   "moment",
   "underscore",
-  "hbs!plugins/github/templates/feed-item"
+  "hbs!plugins/github-feed/templates/feed-item"
 ], function(moment, _, GithubFeedItem) {
 
+
   return {
-    
+
     // public
-    initialize: function() {
-      console.log("ghp-initialize");
+    initialize: function(args) {
       var self = this;
-      console.log(vicgh=self);
+
+      if (args.hasOwnProperty("messageAttachPoint")) {
+        self.messageAttachPoint = args["messageAttachPoint"];
+      }
 
       self.metadataURL = "";
       self.feedURL = "";
@@ -23,13 +26,10 @@ define([
       };
 
       self.githubUpdateFunction = function() {
-        console.log("ghp-updatefunction");
         self.updateAndRender(function(r) {
-          console.log(vicr=r);
 
           if (r.feed[0]) {
             if (r.feed[0].id !== self.last_feed_id) {
-              console.log("this is a new item...", r.feed[0]);
               // .. add new feed items to channel
 
               var newFeedItems = self.newFeeditems(r.feed);
@@ -41,8 +41,9 @@ define([
                 timestamp: moment().format(Komanda.settings.get('display.timestamp'))
               });
 
-              console.log(vichtml=html);
-              self.onItemAdded(html);
+              if (self.messageAttachPoint) {
+                self.messageAttachPoint.append(html);
+              }
             }
           }
         });
@@ -74,8 +75,7 @@ define([
     },
 
     // public: required
-    setTopic: function(topic) {
-      console.log("ghp-settopic");
+    consumeTopic: function(topic) {
       // receives a topic string from komanda and parses to see if this plugin can act on any URLs in the topic.
       var self = this;
 
@@ -120,7 +120,6 @@ define([
 
     // private - as long as we let plugins control their own refresh rates etc
     pluginReDraw: function(callback) {
-      console.log("ghp-pluginredraw")
       var self = this;
 
       self.updateAndRender(function(repo) {
@@ -134,7 +133,6 @@ define([
 
     // private
     updateAndRender: function(callback, errorback) {
-      console.log("ghp-updateandrender");
       var self = this;
 
       $.ajax({
@@ -143,7 +141,6 @@ define([
         type: "get",
         ifModified: true,
         success: function(metadata) {
-          console.log("ajaxed", metadata)
 
           $.ajax({
             url: self.feedURL,
@@ -151,7 +148,6 @@ define([
             type: "get",
             ifModified: true,
             success: function(feed) {
-              console.log("feedjaxed", feed);
               if (metadata && !_.isEmpty(metadata)) self.repo.metadata = metadata;
 
               if (feed && feed.length > 0) {
@@ -163,7 +159,6 @@ define([
               }
             },
             error: function(a,b,c) {
-              console.log("ERROR:::", a,b,c);
               if (errorback && typeof errorback === "function") {
                 errorback(a,b,c);
               }
@@ -171,7 +166,6 @@ define([
           });
         },
         error: function(a,b,c) {
-          console.log("ERROR:::", a,b,c);
           if (errorback && typeof errorback === "function") {
             errorback(a,b,c);
           }
@@ -182,7 +176,6 @@ define([
 
     // public: required
     close: function() {
-      console.log("ghp-close");
       var self = this;
 
       if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);

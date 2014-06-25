@@ -1,0 +1,9 @@
+[
+	{
+		"name": "github-feed",
+		"location": "github-feed",
+		"main": "main",
+		"channel": true,
+		"topic": true
+	}
+]
