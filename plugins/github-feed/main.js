@@ -1,9 +1,17 @@
 define([
   "moment",
   "underscore",
+  "hbs/handlebars",
   "hbs!plugins/github-feed/templates/feed-item"
-], function(moment, _, GithubFeedItem) {
+], function(moment, _, Handlebars, GithubFeedItem) {
 
+  Handlebars.registerHelper("if-github-type", function(type, options) {
+    if (this.type === type) {
+      return options.fn(this); 
+    } else {
+      return options.inverse(this); 
+    }
+  });
 
   return {
 
