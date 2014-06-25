@@ -10,9 +10,12 @@ define([
     // public
     initialize: function(args) {
       var self = this;
+      if (_.has(args, "messageAttachPoint")) {
+        self.messageAttachPoint = args.messageAttachPoint;
+      }
 
-      if (args.hasOwnProperty("messageAttachPoint")) {
-        self.messageAttachPoint = args["messageAttachPoint"];
+      if (_.has(args, "topic")) {
+        self.topic = args.topic;
       }
 
       self.metadataURL = "";
@@ -27,20 +30,18 @@ define([
 
       self.githubUpdateFunction = function() {
         self.updateAndRender(function(r) {
-
           if (r.feed[0]) {
             if (r.feed[0].id !== self.last_feed_id) {
               // .. add new feed items to channel
 
               var newFeedItems = self.newFeeditems(r.feed);
-
               self.last_feed_id = r.feed[0].id;
 
               var html = GithubFeedItem({
                 items: newFeedItems,
                 timestamp: moment().format(Komanda.settings.get('display.timestamp'))
               });
-
+              
               if (self.messageAttachPoint) {
                 self.messageAttachPoint.append(html);
               }
@@ -48,6 +49,11 @@ define([
           }
         });
       };
+
+      // Everything is initialized, if we were passed an initial topic, consume it now:
+      if (self.topic) {
+        self.consumeTopic(self.topic);
+      }
     },
 
     // private
@@ -78,6 +84,7 @@ define([
     consumeTopic: function(topic) {
       // receives a topic string from komanda and parses to see if this plugin can act on any URLs in the topic.
       var self = this;
+      self.topic = topic;
 
       if (topic) {
         var match = topic.match(/http(s)?:\/\/.*\.?github.com\/(.[\w|\-|\/]+)/);
@@ -177,7 +184,6 @@ define([
     // public: required
     close: function() {
       var self = this;
-
       if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
       self.githubUpdateFunction = null;
     }
