@@ -142,62 +142,65 @@ define([
 
     loadPlugins: function() {
       /*
-      ** Looks in the plugin directory for a plugins.json file
-      ** Parses it out and makes these plugins ready to use by:
-      **  1- Adding the plugin path to requirejs' config paths.
-      **  2- Adding the plugin and it's settings to the Komanda.settings.plugins array.
+      ** 1- Looks in the plugin directory for a plugins.json file
+      ** 2- Parses it out and looks for valid plugins defined within
+      ** 3- Loads the plugin via node's require() module
+      ** 4- Adds the plugin and its settings to the Komanda.settings.plugins array.
       */
-
-      // Clear all plugins if any:
-      Komanda.settings.plugins = [];
-
-      var pluginJSONPath = "plugins/plugins.json"; // TODO: replace with a path stored in Komanda.settings: settings.get('pluginjsonpath');
 
       // Load the fs and path node modules we will be needing.
       var fs = requireNode("fs");
       var path = requireNode("path");
+      
+      // Clear all plugins if any:
+      Komanda.settings.plugins = [];
 
-      // Check that the plugins.json file exists where it should be:
+      // For now we consider the app dataPath as the root of the plugins folder.
+      var appDataPath = process._nw_app.dataPath; // TODO: replace with a path stored in Komanda.settings: settings.get('pluginsFolder');
+
+      // Construct the path to the plugins configuration file at <appdata>/plugins/plugins.json.
+      var pluginRoot = path.join(appDataPath, "plugins");
+      var pluginJSONPath = path.join(pluginRoot, "plugins.json");
+
+      // Check that the plugins.json file exists where it should be.
       if (!fs.existsSync(pluginJSONPath)) {
         return;
       }
 
-      // Read the plugins.json file from the provided path
-      var pluginSettings = JSON.parse(fs.readFileSync(pluginJSONPath, 'utf8'));
+      // Read the plugins.json file from the provided path.
+      var pluginSettings = JSON.parse(fs.readFileSync(pluginJSONPath, "utf8"));
 
-      // Check that there are plugins specified:
+      // Check that it isn't empty.
       if (pluginSettings.length < 1) {
         return;
       }
 
-      // Add the plugins path to requirejs.config
-      window.requirejs.config({
-        paths: {
-          "plugins": "../plugins" // TODO replace with the basedir of the pluginJSONPath... relative to requirejs/main...
-        }
-      });
-
+      // Load each plugin:
       for (var i = 0; i < pluginSettings.length; i++) {
-        // The only required field is the plugin name:
+        // The only required field is the plugin name.
         if (!pluginSettings[i].name) {
           continue;
         }
 
-        // Build the path to this plugin to be added to requirejs.config
-        var pluginpath = {};
-        pluginpath[pluginSettings[i].name] = path.join("../plugins", pluginSettings[i].location, pluginSettings[i].main); // TODO hardcoded ../plugins path
-        window.requirejs.config({
-          paths: pluginpath
-        });
+        // Build the path to this plugin and verify it exists.
+        var pluginpath = path.join(pluginRoot, pluginSettings[i].location, pluginSettings[i].main);
+        if (!fs.existsSync(pluginpath)) {
+          return;
+        }
 
+        // use node's require module to acquire the plugin module.
+        var plug = requireNode(pluginpath);
+        
         // And finally add the plugin info that we need to Komanda settings.
         var pluginobj = {
           "name": pluginSettings[i].name,
           "channel": pluginSettings[i].channel || false,
-          "topic": pluginSettings[i].topic || false
+          "topic": pluginSettings[i].topic || false,
+          "plugin": plug
         };
         Komanda.settings.addPlugin(pluginobj);
       }
+
     }
 
   };
