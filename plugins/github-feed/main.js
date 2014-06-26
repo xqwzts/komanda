@@ -47,7 +47,7 @@ define([
 
               var html = GithubFeedItem({
                 items: newFeedItems,
-                timestamp: moment().format(Komanda.settings.get('display.timestamp'))
+                timestamp: moment().format(Komanda.settings.get("display.timestamp"))
               });
               
               if (self.messageAttachPoint) {
@@ -105,7 +105,7 @@ define([
             self.feedURL = "";
 
             if (/\/$/.test(key)) {
-              key = key.replace(/\/$/, '');
+              key = key.replace(/\/$/, "");
             }
 
             if (/\//.test(key)) {
