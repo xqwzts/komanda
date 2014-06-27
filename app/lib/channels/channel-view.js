@@ -5,8 +5,9 @@ define([
   "tabcomplete",
   "uuid",
   "moment",
-  "highlight"
-], function(Marionette, template, _, tab, uuid, moment, hljs) {
+  "highlight",
+  "templates/helpers/timestamp"
+], function(Marionette, template, _, tab, uuid, moment, hljs, timestamp) {
 
   return Marionette.ItemView.extend({
     tagName: "div",
