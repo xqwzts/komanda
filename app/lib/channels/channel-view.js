@@ -30,6 +30,7 @@ define([
       self.completerSetup = false;
       self.completer = null;
       self.plugs = [];
+      self.messageAttachPoint = null; // gets set in onRender when the DOM node is loaded.
 
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":update:words", function(words, channels) {
         self.updateWords(false, false);
@@ -40,7 +41,6 @@ define([
       // Needs to be called after the view has been rendered [onRender()] to ensure that the attach points have been inserted
       // in the DOM and can be passed safely to the plugins.
       var self = this;
-      var messagesEl = $(self.el).find(".messages");
 
       // Get a list of channel plugins from Komanda.settings:
       var channelPlugins = _.where(Komanda.settings.plugins, {"channel": true});
@@ -180,6 +180,7 @@ define([
     onRender: function() {
       var self = this;
       var $this = $(this.el);
+      self.messageAttachPoint = $(self.el).find(".messages");
 
       $this.attr("data-server-id", this.model.get("server"));
       $this.attr("data-name", this.model.get("channel"));
