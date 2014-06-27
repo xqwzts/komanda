@@ -2,7 +2,7 @@
 	{
 		"name": "github-feed",
 		"location": "github-feed",
-		"main": "main",
+		"main": "main.js",
 		"channel": true,
 		"topic": true
 	}

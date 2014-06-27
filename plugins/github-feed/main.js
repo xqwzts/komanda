@@ -1,18 +1,20 @@
-define([
-  "moment",
-  "underscore",
-  "hbs/handlebars",
-  "hbs!plugins/github-feed/templates/feed-item"
-], function(moment, _, Handlebars, GithubFeedItem) {
+module.exports = function() {
 
-  Handlebars.registerHelper("if-github-type", function(type, options) {
-    if (this.type === type) {
-      return options.fn(this); 
-    } else {
-      return options.inverse(this); 
-    }
-  });
+  // use the node hbs module for templating
+  var hbs = require("hbs");
+  var $ = require("jquery");
 
+  hbs.registerHelper("if-github-type", function(type, options) {
+      if (this.type === type) {
+        return options.fn(this); 
+      } else {
+        return options.inverse(this); 
+      }
+    });
+
+  var feedItemTemplate = require("./templates/feed-item.hbs");
+  var GithubFeedItem = hbs.compile(feedItemTemplate);
+  
   return {
 
     // public
@@ -152,14 +154,14 @@ define([
 
       $.ajax({
         url: self.metadataURL,
-        dataType: "json",
+        dataType: "jsonp",
         type: "get",
         ifModified: true,
         success: function(metadata) {
 
           $.ajax({
             url: self.feedURL,
-            dataType: "json",
+            dataType: "jsonp",
             type: "get",
             ifModified: true,
             success: function(feed) {
@@ -198,4 +200,4 @@ define([
     
   };
 
-});
+}
