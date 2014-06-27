@@ -4,13 +4,13 @@ module.exports = function() {
   var hbs = require("hbs");
   var $ = require("jquery");
 
-  hbs.registerHelper("if-github-type", function(type, options) {
-      if (this.type === type) {
-        return options.fn(this); 
-      } else {
-        return options.inverse(this); 
-      }
-    });
+  function ifGithubType(type, options) {
+    if (this.type === type) {
+      return options.fn(this); 
+    } else {
+      return options.inverse(this); 
+    }
+  };
 
   var feedItemTemplate = require("./templates/feed-item.hbs");
   var GithubFeedItem = hbs.compile(feedItemTemplate);
@@ -51,6 +51,10 @@ module.exports = function() {
               var html = GithubFeedItem({
                 items: newFeedItems,
                 timestamp: timestamp
+              }, {
+                helpers: {
+                  "if-github-type": ifGithubType
+                }
               });
               self.channelAPI.addChannelMessage(html);
             }
