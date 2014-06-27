@@ -31,10 +31,36 @@ define([
       self.completer = null;
       self.plugs = [];
       self.messageAttachPoint = null; // gets set in onRender when the DOM node is loaded.
+      self.topicChangeCallbacks = []; // Array of callbacks to trigger when the channel topic is changed.
 
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":update:words", function(words, channels) {
         self.updateWords(false, false);
       });
+    },
+
+    getChannelAPI: function() {
+      var self = this;
+
+      var channelAPI = {
+        getTimestamp: function(timeToStamp) {
+          return timestamp(timeToStamp);
+        },
+
+        addChannelMessage: function(html) {
+          if (html) {
+            self.messageAttachPoint.append(html);
+          }
+        },
+
+        onChannelTopicChange: function(topicChangeCallback) {
+          self.topicChangeCallbacks.push(topicChangeCallback);
+        }
+
+      }
+
+
+      return _.extend({}, channelAPI); // return a new instance
+
     },
 
     loadPlugins: function() {
@@ -65,17 +91,16 @@ define([
     addTopicHooks: function() {
       var self = this;
 
-      // When the topic changes, call consumeTopic on each plugin:
+      // Listen for topic changes.
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":topic", function(topic) {
-          // Filter out from this channel's plugins all the ones that want to be notified on topic change.
-          var topicPlugs = _.where(self.plugs, {"topic": true});
-          _.each(topicPlugs, function(topicPlug) {
-            var thePlugin = topicPlug.plugin;
-            // Make sure this plugins exposses a public consumeTopic method, and pass it the new topic.
-            if (_.has(thePlugin, "consumeTopic")) {
-              thePlugin.consumeTopic(topic);
-            }
-          });
+          // Call all registered topic change callbacks.
+          if (!_.isEmpty(self.topicChangeCallbacks)) {
+            _.each(self.topicChangeCallbacks, function(topicChangeCallback) {
+              if (_.isFunction(topicChangeCallback)) {
+                topicChangeCallback(topic);
+              }
+            });
+          }
       });
     },
 
