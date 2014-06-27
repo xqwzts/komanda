@@ -41,8 +41,6 @@ define([
       // in the DOM and can be passed safely to the plugins.
       var self = this;
       var messagesEl = $(self.el).find(".messages");
-      var initialTopic = self.model.get("topic");
-      initialTopic = initialTopic.topic || initialTopic;
 
       // Get a list of channel plugins from Komanda.settings:
       var channelPlugins = _.where(Komanda.settings.plugins, {"channel": true});
@@ -57,7 +55,7 @@ define([
           "plugin": thePlugin
         });
         // Initialize the plugin.
-        thePlugin.initialize({messageAttachPoint: messagesEl, topic: initialTopic});
+        thePlugin.initialize({ messageAttachPoint: messagesEl });
       });
 
       // Now that all the plugins are loaded, hook in to topic changes.

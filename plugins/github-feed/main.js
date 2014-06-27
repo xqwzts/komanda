@@ -24,10 +24,6 @@ module.exports = function() {
         self.messageAttachPoint = args.messageAttachPoint;
       }
 
-      if (_.has(args, "topic")) {
-        self.topic = args.topic;
-      }
-
       self.metadataURL = "";
       self.feedURL = "";
       self.last_feed_id = 0;
@@ -59,11 +55,6 @@ module.exports = function() {
           }
         });
       };
-
-      // Everything is initialized, if we were passed an initial topic, consume it now:
-      if (self.topic) {
-        self.consumeTopic(self.topic);
-      }
     },
 
     // private
