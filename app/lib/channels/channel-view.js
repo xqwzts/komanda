@@ -50,6 +50,11 @@ define([
         addChannelMessage: function(html) {
           if (html) {
             self.messageAttachPoint.append(html);
+
+            // Not sure why this wont scroll the window down
+            setTimeout(function() {
+              Komanda.helpers.scrollUpdate(self.messageAttachPoint);
+            }, 100);
           }
         },
 
