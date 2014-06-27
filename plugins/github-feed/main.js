@@ -141,22 +141,35 @@ module.exports = function() {
 
     // private
     updateAndRender: function(callback, errorback) {
-      var self = this;
+     var self = this;
+     var metadata;
+     var feed;
 
       $.ajax({
         url: self.metadataURL,
         dataType: "jsonp",
         type: "get",
         ifModified: true,
-        success: function(metadata) {
+        timeout: 5000,
+        success: function(metaresponse) {
+          if (metaresponse.data) {
+            metadata = metaresponse.data;
+          }
 
           $.ajax({
             url: self.feedURL,
             dataType: "jsonp",
             type: "get",
             ifModified: true,
-            success: function(feed) {
-              if (metadata && !_.isEmpty(metadata)) self.repo.metadata = metadata;
+            timeout: 5000,
+            success: function(feedresponse) {
+              if (feedresponse.data) {
+                feed = feedresponse.data;
+              }
+
+              if (metadata && !_.isEmpty(metadata)) {
+                self.repo.metadata = metadata;
+              }
 
               if (feed && feed.length > 0) {
                 self.repo.feed = feed;
