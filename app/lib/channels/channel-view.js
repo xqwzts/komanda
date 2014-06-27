@@ -56,12 +56,9 @@ define([
         onChannelTopicChange: function(topicChangeCallback) {
           self.topicChangeCallbacks.push(topicChangeCallback);
         }
+      };
 
-      }
-
-
-      return _.extend({}, channelAPI); // return a new instance
-
+      return _.extend({}, channelAPI); // return a new instance every time
     },
 
     loadPlugins: function() {
