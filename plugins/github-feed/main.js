@@ -20,8 +20,8 @@ module.exports = function() {
     // public
     initialize: function(args) {
       var self = this;
-      if (_.has(args, "messageAttachPoint")) {
-        self.messageAttachPoint = args.messageAttachPoint;
+      if (_.has(args, "channelAPI")) {
+        self.channelAPI = args.channelAPI;
       }
 
       self.metadataURL = "";
@@ -34,23 +34,25 @@ module.exports = function() {
         feed: []
       };
 
+      // hook into the channel's topic change event
+      self.channelAPI.onChannelTopicChange(function(topic) {
+        self.consumeTopic(topic);
+      });
+
       self.githubUpdateFunction = function() {
         self.updateAndRender(function(r) {
           if (r.feed[0]) {
             if (r.feed[0].id !== self.last_feed_id) {
               // .. add new feed items to channel
-
               var newFeedItems = self.newFeeditems(r.feed);
               self.last_feed_id = r.feed[0].id;
 
+              var timestamp = self.channelAPI.getTimestamp();
               var html = GithubFeedItem({
                 items: newFeedItems,
-                timestamp: moment().format(Komanda.settings.get("display.timestamp"))
+                timestamp: timestamp
               });
-              
-              if (self.messageAttachPoint) {
-                self.messageAttachPoint.append(html);
-              }
+              self.channelAPI.addChannelMessage(html);
             }
           }
         });
@@ -92,7 +94,6 @@ module.exports = function() {
 
         if (match) {
           var key = match[2];
-
           if (key) {
             self.metadataURL = "";
             self.feedURL = "";

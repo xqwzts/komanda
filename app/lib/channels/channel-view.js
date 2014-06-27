@@ -81,8 +81,10 @@ define([
           "topic": channelPlugin.topic,
           "plugin": thePlugin
         });
+        // Get a new instance of the channel API for this plugin.
+        var pluginChannelAPI = self.getChannelAPI();
         // Initialize the plugin.
-        thePlugin.initialize({ messageAttachPoint: messagesEl });
+        thePlugin.initialize({ channelAPI: pluginChannelAPI });
       });
 
       // Now that all the plugins are loaded, hook in to topic changes.
