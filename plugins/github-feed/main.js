@@ -116,7 +116,7 @@ module.exports = function() {
 
             self.pluginReDraw(function() {
               // set the first feed cache id
-              if (self.repo.feed[1]) self.last_feed_id = self.repo.feed[1].id;
+              if (self.repo.feed[0]) self.last_feed_id = self.repo.feed[0].id;
             });
 
           } else {
