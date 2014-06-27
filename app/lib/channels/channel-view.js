@@ -47,33 +47,33 @@ define([
       // Get a list of channel plugins from Komanda.settings:
       var channelPlugins = _.where(Komanda.settings.plugins, {"channel": true});
 
-      // Dynamic require to load all the plugins we want to initialize
-      requirejs(_.pluck(channelPlugins, "name"), function () {
-        for (var i = 0; i < channelPlugins.length; i++) {
-          var thePlug = channelPlugins[i];
-          // Push this plugin and its info to our plugin list so we can use it throughout the view:
-          self.plugs.push({
-            "name": thePlug.name,
-            "topic": thePlug.topic,
-            "plugin": arguments[i]
-          });
-          // Initialize the plugin that was just created, passing it the messageAttachPoint:
-          arguments[i].initialize({messageAttachPoint: messagesEl, topic: initialTopic});
-        }
-        // Wait for all the plugins to load and add the hooks:
-        self.addTopicHooks();
-      });      
+      _.each(channelPlugins, function(channelPlugin) {
+        // Instantiate a new instance of the plugin.
+        var thePlugin = new channelPlugin.plugin();
+        // Add plugin info relevant to the channel.
+        self.plugs.push({
+          "name": channelPlugin.name,
+          "topic": channelPlugin.topic,
+          "plugin": thePlugin
+        });
+        // Initialize the plugin.
+        thePlugin.initialize({messageAttachPoint: messagesEl, topic: initialTopic});
+      });
+
+      // Now that all the plugins are loaded, hook in to topic changes.
+      self.addTopicHooks();
     },
 
     addTopicHooks: function() {
       var self = this;
 
-      // When the topic changes, call setTopic on each plugin:
+      // When the topic changes, call consumeTopic on each plugin:
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":topic", function(topic) {
-          // Filter out from this channel's plugins  all the ones that want to be notified on topic changes:
+          // Filter out from this channel's plugins all the ones that want to be notified on topic change.
           var topicPlugs = _.where(self.plugs, {"topic": true});
           _.each(topicPlugs, function(topicPlug) {
             var thePlugin = topicPlug.plugin;
+            // Make sure this plugins exposses a public consumeTopic method, and pass it the new topic.
             if (_.has(thePlugin, "consumeTopic")) {
               thePlugin.consumeTopic(topic);
             }
