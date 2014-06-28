@@ -1,9 +1,18 @@
 [
-	{
-		"name": "github-feed",
-		"location": "github-feed",
-		"main": "main.js",
-		"channel": true,
-		"topic": true
-	}
+  {
+    "disabled": true,
+    "name": "github-feed",
+    "location": "github-feed",
+    "main": "main.js",
+    "channel": true,
+    "topic": true
+  },
+
+  {
+    "name": "github-toolbar",
+    "location": "github-toolbar",
+    "main": "main.js",
+    "channel": true,
+    "topic": true
+  }
 ]

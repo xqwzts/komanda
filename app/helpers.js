@@ -182,6 +182,11 @@ define([
           continue;
         }
 
+        // if the plugin is disabled don't load it
+        if (pluginSettings[i].disabled) {
+          continue;
+        }
+
         // Build the path to this plugin and verify it exists.
         var pluginpath = path.join(pluginRoot, pluginSettings[i].location, pluginSettings[i].main);
         if (!fs.existsSync(pluginpath)) {

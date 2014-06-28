@@ -17,7 +17,7 @@ module.exports = function() {
   
   return {
 
-    // public
+    // public: required
     initialize: function(args) {
       var self = this;
       if (_.has(args, "channelAPI")) {
@@ -35,7 +35,7 @@ module.exports = function() {
       };
 
       // hook into the channel's topic change event
-      self.channelAPI.onChannelTopicChange(function(topic) {
+      self.channelAPI.onChannelTopicChange(function (topic) {
         self.consumeTopic(topic);
       });
 
@@ -63,7 +63,6 @@ module.exports = function() {
       };
     },
 
-    // private
     newFeeditems: function(feed) {
       var self = this;
 
@@ -87,7 +86,6 @@ module.exports = function() {
       };
     },
 
-    // public: required
     consumeTopic: function(topic) {
       // receives a topic string from komanda and parses to see if this plugin can act on any URLs in the topic.
       var self = this;
