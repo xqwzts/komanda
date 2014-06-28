@@ -647,11 +647,11 @@ user-select: none;
 	padding-right: 45px;
 }
 
-.channel.github-plugin .messages{
+.channel.toolbar-attached .messages{
 	top: 80px;	
 }
 
-.channel.github-plugin .topic{
+.channel.toolbar-attached .topic{
 	-webkit-box-shadow: none;
 	box-shadow: none;
 }
