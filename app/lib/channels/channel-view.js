@@ -32,7 +32,7 @@ define([
       self.completer = null;
       self.plugs = [];
       self.messageAttachPoint = null; // gets set in onRender when the DOM node is loaded.
-      self.toolbarAttachPoint = null;
+      self.toolbarAttachPoint = null; // gets set in onRender when the DOM node is loaded.
       self.toolbarElement = null;
       self.topicChangeCallbacks = []; // Array of callbacks to trigger when the channel topic is changed.
 
