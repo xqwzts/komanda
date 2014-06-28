@@ -3,6 +3,8 @@ module.exports = function() {
   // use the node hbs module for templating
   var hbs = require("hbs");
   var $ = require("jquery");
+  var marked = require("marked");
+  var highlightjs = require("highlight.js");
 
   function ifGithubType(type, options) {
     if (this.type === type) {
@@ -10,6 +12,24 @@ module.exports = function() {
     } else {
       return options.inverse(this); 
     }
+  };
+
+  marked.setOptions({
+    gfm: true,
+    tables: true,
+    breaks: false,
+    pedantic: false,
+    sanitize: true,
+    smartLists: true,
+    smartypants: false,
+    highlight: function (code) {
+      console.log("CODE", code);
+      return highlightjs.highlightAuto(code).value;
+    }
+  });
+
+  function markdown(text) {
+    return marked(text);
   };
 
   var feedItemTemplate = require("./templates/feed-item.hbs");
@@ -53,7 +73,8 @@ module.exports = function() {
                 timestamp: timestamp
               }, {
                 helpers: {
-                  "if-github-type": ifGithubType
+                  "if-github-type": ifGithubType,
+                  "markdown": markdown
                 }
               });
               self.channelAPI.addChannelMessage(html);

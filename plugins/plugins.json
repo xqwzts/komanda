@@ -1,6 +1,5 @@
 [
   {
-    "disabled": true,
     "name": "github-feed",
     "location": "github-feed",
     "main": "main.js",
