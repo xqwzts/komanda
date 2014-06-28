@@ -32,6 +32,8 @@ define([
       self.completer = null;
       self.plugs = [];
       self.messageAttachPoint = null; // gets set in onRender when the DOM node is loaded.
+      self.toolbarAttachPoint = null;
+      self.toolbarElement = null;
       self.topicChangeCallbacks = []; // Array of callbacks to trigger when the channel topic is changed.
 
       Komanda.vent.on(self.model.get("server") + ":" + self.model.get("channel") + ":update:words", function(words, channels) {
@@ -55,6 +57,23 @@ define([
             setTimeout(function() {
               Komanda.helpers.scrollUpdate(self.messageAttachPoint);
             }, 100);
+          }
+        },
+
+        setToolbar: function(html) {
+          if (html) {
+            // if we already have an attached toolbar clear it before adding the new one.
+            this.removeToolbar();
+            self.toolbarElement = $(html).prependTo(self.toolbarAttachPoint);
+            self.toolbarAttachPoint.addClass("toolbar-attached");
+          }
+        },
+
+        removeToolbar: function() {
+          if (self.toolbarElement) {
+            self.toolbarAttachPoint.removeClass("toolbar-attached");
+            self.toolbarElement.remove();
+            self.toolbarElement = null;
           }
         },
 
@@ -211,6 +230,7 @@ define([
       var self = this;
       var $this = $(this.el);
       self.messageAttachPoint = $(self.el).find(".messages");
+      self.toolbarAttachPoint = $(self.el);
 
       $this.attr("data-server-id", this.model.get("server"));
       $this.attr("data-name", this.model.get("channel"));
