@@ -196,13 +196,22 @@ define([
         // use node's require module to acquire the plugin module.
         var plug = requireNode(pluginpath);
         
-        // And finally add the plugin info that we need to Komanda settings.
+        // Add the plugin info that we need to Komanda settings.
         var pluginobj = {
           "name": pluginSettings[i].name,
           "channel": pluginSettings[i].channel || false,
           "topic": pluginSettings[i].topic || false,
           "plugin": plug
         };
+
+        // if a stylesheet path was provided verify it exists before adding it to the plugin info.
+        if (pluginSettings[i].stylesheet) {
+          var stylesheetpath = path.join(pluginRoot, pluginSettings[i].location, pluginSettings[i].stylesheet);
+          if (fs.existsSync(stylesheetpath)) {
+            pluginobj["stylesheetPath"] = stylesheetpath;
+          }
+        }
+
         Komanda.settings.addPlugin(pluginobj);
       }
 
