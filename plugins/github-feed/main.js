@@ -1,6 +1,6 @@
 module.exports = function() {
 
-  // use the node hbs module for templating
+  var Promise = require("bluebird");
   var hbs = require("hbs");
   var marked = require("marked");
   var highlightjs = require("highlight.js");
@@ -11,7 +11,6 @@ module.exports = function() {
   $.ajaxSettings.xhr = function() {
     return new XMLHttpRequest();
   }
-
 
   function ifGithubType(type, options) {
     if (this.type === type) {
@@ -122,39 +121,33 @@ module.exports = function() {
       if (topic) {
         var match = topic.match(/http(s)?:\/\/.*\.?github.com\/(.[\w|\-|\/]+)/);
 
-        if (match) {
+        if (match && match[2]) {
           var key = match[2];
-          if (key) {
-            self.metadataURL = "";
-            self.feedURL = "";
+          self.metadataURL = "";
+          self.feedURL = "";
 
-            if (/\/$/.test(key)) {
-              key = key.replace(/\/$/, "");
-            }
+          if (/\/$/.test(key)) {
+            key = key.replace(/\/$/, "");
+          }
 
-            if (/\//.test(key)) {
-              self.metadataURL = "https://api.github.com/repos/" + key;
-              self.feedURL = "https://api.github.com/repos/" + key + "/events";
-            } else {
-              self.metadataURL = "https://api.github.com/orgs/" + key;
-              self.feedURL = "https://api.github.com/orgs/" + key + "/events";
-            }
-
-            self.pluginReDraw(function() {
-              // set the first feed cache id
-              if (self.repo.feed[0]) self.last_feed_id = self.repo.feed[0].id;
-            });
-
+          if (/\//.test(key)) {
+            self.metadataURL = "https://api.github.com/repos/" + key;
+            self.feedURL = "https://api.github.com/repos/" + key + "/events";
           } else {
-            if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-          } // has match index 3
-        } else {
-          if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-        } // has match
-      } else {
-        if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-      } // has topic
+            self.metadataURL = "https://api.github.com/orgs/" + key;
+            self.feedURL = "https://api.github.com/orgs/" + key + "/events";
+          }
 
+          self.pluginReDraw(function() {
+            // set the first feed cache id
+            if (self.repo.feed[0]) self.last_feed_id = self.repo.feed[0].id;
+          });
+
+          return;
+        }
+      }
+
+      if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
     },
 
     // private - as long as we let plugins control their own refresh rates etc
@@ -165,7 +158,7 @@ module.exports = function() {
         if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
         self.githubUpdateCheck = setInterval(self.githubUpdateFunction, 60000);
 
-        if (callback && typeof callback === "function") callback(repo);
+        if (_.isFunction(callback)) callback(repo);
       });
 
     },
@@ -173,48 +166,36 @@ module.exports = function() {
     // private
     updateAndRender: function(callback, errorback) {
      var self = this;
-     var metadata;
-     var feed;
 
-      $.ajax({
+      if (!_.isFunction(callback)) callback = _.noop;
+      if (!_.isFunction(errorback)) errorback = _.noop;
+
+      Promise.resolve($.ajax({
         url: self.metadataURL,
         dataType: "json",
         type: "get",
-        ifModified: true,
-        success: function(metadata) {
-
-          $.ajax({
-            url: self.feedURL,
-            dataType: "json",
-            type: "get",
-            ifModified: true,
-            success: function(feed) {
-              if (metadata && !_.isEmpty(metadata)) {
-                self.repo.metadata = metadata;
-              }
-
-              if (feed && feed.length > 0) {
-                self.repo.feed = feed;
-              }
-
-              if (callback && typeof callback === "function") {
-                return callback(self.repo);
-              }
-            },
-            error: function(a,b,c) {
-              if (errorback && typeof errorback === "function") {
-                errorback(a,b,c);
-              }
-            }
-          });
-        },
-        error: function(a,b,c) {
-          if (errorback && typeof errorback === "function") {
-            errorback(a,b,c);
+        ifModified: true
+      }))
+      .then(function(metadata) {
+        return Promise.resolve($.ajax({
+          url: self.feedURL,
+          dataType: "json",
+          type: "get",
+          ifModified: true
+        }))
+        .then(function(feed) {
+          if (metadata && !_.isEmpty(metadata)) {
+            self.repo.metadata = metadata;
           }
-        }
-      });
 
+          if (feed && feed.length > 0) {
+            self.repo.feed = feed;
+          }
+          return self.repo;
+        });
+      })
+      .catch(errorback)
+      .then(callback);
     },
 
     // public: required
