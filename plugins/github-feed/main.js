@@ -163,7 +163,7 @@ module.exports = function() {
 
       self.updateAndRender(function(repo) {
         if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-        self.githubUpdateCheck = setInterval(self.githubUpdateFunction, 200000);
+        self.githubUpdateCheck = setInterval(self.githubUpdateFunction, 60000);
 
         if (callback && typeof callback === "function") callback(repo);
       });
