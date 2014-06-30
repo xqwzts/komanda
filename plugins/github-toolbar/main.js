@@ -94,6 +94,8 @@ module.exports = function() {
         url: self.metadataURL,
         dataType: "jsonp",
         type: "get",
+        cache: true,
+        jsonp: "callback",
         ifModified: true,
         timeout: 5000,
         success: function(metaresponse) {
@@ -123,6 +125,6 @@ module.exports = function() {
 
       // if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
       self.channelAPI.removeToolbar();
-    },
+    }
   }
 }

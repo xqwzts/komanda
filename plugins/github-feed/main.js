@@ -156,7 +156,7 @@ module.exports = function() {
 
       self.updateAndRender(function(repo) {
         if (self.githubUpdateCheck) clearInterval(self.githubUpdateCheck);
-        self.githubUpdateCheck = setInterval(self.githubUpdateFunction, 20000);
+        self.githubUpdateCheck = setInterval(self.githubUpdateFunction, 200000);
 
         if (callback && typeof callback === "function") callback(repo);
       });
@@ -173,6 +173,8 @@ module.exports = function() {
         url: self.metadataURL,
         dataType: "jsonp",
         type: "get",
+        cache: true,
+        jsonp: "callback",
         ifModified: true,
         timeout: 5000,
         success: function(metaresponse) {
@@ -185,6 +187,8 @@ module.exports = function() {
             dataType: "jsonp",
             type: "get",
             ifModified: true,
+            cache: true,
+            jsonp: "callback",
             timeout: 5000,
             success: function(feedresponse) {
               if (feedresponse.data) {
