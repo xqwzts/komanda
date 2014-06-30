@@ -2,9 +2,16 @@ module.exports = function() {
 
   // use the node hbs module for templating
   var hbs = require("hbs");
-  var $ = require("jquery");
   var marked = require("marked");
   var highlightjs = require("highlight.js");
+  var $ = require("jquery");
+  var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+
+  $.support.cors = true;
+  $.ajaxSettings.xhr = function() {
+    return new XMLHttpRequest();
+  }
+
 
   function ifGithubType(type, options) {
     if (this.type === type) {
@@ -171,30 +178,17 @@ module.exports = function() {
 
       $.ajax({
         url: self.metadataURL,
-        dataType: "jsonp",
+        dataType: "json",
         type: "get",
-        cache: true,
-        jsonp: "callback",
         ifModified: true,
-        timeout: 5000,
-        success: function(metaresponse) {
-          if (metaresponse.data) {
-            metadata = metaresponse.data;
-          }
+        success: function(metadata) {
 
           $.ajax({
             url: self.feedURL,
-            dataType: "jsonp",
+            dataType: "json",
             type: "get",
             ifModified: true,
-            cache: true,
-            jsonp: "callback",
-            timeout: 5000,
-            success: function(feedresponse) {
-              if (feedresponse.data) {
-                feed = feedresponse.data;
-              }
-
+            success: function(feed) {
               if (metadata && !_.isEmpty(metadata)) {
                 self.repo.metadata = metadata;
               }

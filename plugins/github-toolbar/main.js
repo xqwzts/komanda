@@ -2,6 +2,12 @@ module.exports = function() {
 
   var hbs = require("hbs");
   var $ = require("jquery");
+  var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+
+  $.support.cors = true;
+  $.ajaxSettings.xhr = function() {
+    return new XMLHttpRequest();
+  }
 
   var toolbarTemplate = require("./templates/toolbar.hbs");
   var GithubToolbar = hbs.compile(toolbarTemplate);
@@ -92,16 +98,10 @@ module.exports = function() {
 
       $.ajax({
         url: self.metadataURL,
-        dataType: "jsonp",
+        dataType: "json",
         type: "get",
-        cache: true,
-        jsonp: "callback",
         ifModified: true,
-        timeout: 5000,
-        success: function(metaresponse) {
-          if (metaresponse.data) {
-            metadata = metaresponse.data;
-          }
+        success: function(metadata) {
           if (metadata && !_.isEmpty(metadata)) {
             self.repo.metadata = metadata;
             self.pluginToolbar(self.repo);

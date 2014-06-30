@@ -6,6 +6,7 @@
   "private": true,
   "dependencies": {
     "hbs": ">=2.7.0",
-    "jquery": ">=2.1.1"
+    "jquery": ">=2.1.1",
+    "xmlhttprequest": ">=1.6.0"
   }
 }
