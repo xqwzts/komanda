@@ -4,7 +4,8 @@
     "location": "github-feed",
     "main": "main.js",
     "channel": true,
-    "topic": true
+    "topic": true,
+    "stylesheet": "/styles/github-feed.css"
   },
 
   {
@@ -12,6 +13,7 @@
     "location": "github-toolbar",
     "main": "main.js",
     "channel": true,
-    "topic": true
+    "topic": true,
+    "stylesheet": "/styles/github-toolbar.css"
   }
 ]
